@@ -1,4 +1,41 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+
+# =========================
+# Virtual environment
+# =========================
+venv/
+.venv/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Large datasets
+# =========================
+*.csv
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.*
+
+# =========================
+# Model cache / temporary files
+# =========================
+*.tmp
+*.temp
+
+# =========================
 # Logs
+# =========================
 logs
 *.log
 npm-debug.log*
@@ -7,12 +44,17 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# =========================
+# Node / React
+# =========================
 node_modules
 dist
 dist-ssr
 *.local
 
+# =========================
 # Editor directories and files
+# =========================
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +64,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# =========================
+# OS files
+# =========================
+Thumbs.db

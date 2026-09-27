@@ -30,10 +30,12 @@ const HeroCard = () => {
           tension headaches. Stress, posture, or screen fatigue can contribute.
         </p>
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-xs font-medium text-[#00C9A7]">
+          <button className="text-xs font-medium text-[#00C9A7]">
             Explore 3 considerations
-          </p>
-          <i className="fa-solid fa-arrow-right text-sm text-[#00C9A7]"></i>
+          </button>
+          <button>
+            <i className="fa-solid fa-arrow-right text-sm text-[#00C9A7]"></i>
+          </button>
         </div>
       </div>
     </div>

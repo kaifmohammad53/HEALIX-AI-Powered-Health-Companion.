@@ -1,3 +1,4 @@
+import { useState,useEffect } from "react";
 import heroBg from "../assets/Hero-bg.png";
 import logoImage from "../assets/hero-logo.png"
 import HeroCard from "./HeroCard";
@@ -7,14 +8,14 @@ export function CTAButtons({ primary, secondary, primaryTo, secondaryTo }) {
     <div className="text-white flex justify-start gap-8 text-lg">
       <Link
         to={primaryTo}
-        className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold"
+        className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold transition-transform duration-500 hover:scale-105"
       >
         {primary}
       </Link>
 
       <Link
         to={secondaryTo}
-        className="border-white border-2 px-4 py-2 rounded-3xl"
+        className="border-white border-2 px-4 py-2 rounded-3xl transition-transform duration-500 hover:scale-105"
       >
         {secondary}
       </Link>
@@ -27,12 +28,37 @@ export function Navbar(){
       <div className="w-1/6 h-full flex items-center">
         <img src={logoImage} alt="HEALIX" className="w-auto h-full" />
       </div>
-      <div className="h-full w-2/5 flex justify-between items-center text-white text-lg">
-        <a href="">Home</a>
-        <a href="">About</a>
-        <a href="">Features</a>
-        <a href="">How it works</a>
-        <a href="">Contact</a>
+      <div className="h-full w-2/5 flex justify-between items-center text-white text-xl ">
+        <a
+          href=""
+          className="transition-transform duration-300 hover:underline hover:decoration-[#00C9A7] underline-offset-4"
+        >
+          Home
+        </a>
+        <a
+          href=""
+          className="transition-transform duration-300 hover:underline hover:decoration-[#00C9A7] underline-offset-4"
+        >
+          About
+        </a>
+        <a
+          href=""
+          className="transition-transform duration-300 hover:underline hover:decoration-[#00C9A7] underline-offset-4"
+        >
+          Features
+        </a>
+        <a
+          href=""
+          className="transition-transform duration-300 hover:underline hover:decoration-[#00C9A7] underline-offset-4"
+        >
+          How it works
+        </a>
+        <a
+          href=""
+          className="transition-transform duration-300 hover:underline hover:decoration-[#00C9A7] underline-offset-4"
+        >
+          Contact
+        </a>
       </div>
       <div>
         <CTAButtons
@@ -46,15 +72,30 @@ export function Navbar(){
   );
 };
 const Hero = () => {
+   const [scrolled, setScrolled] = useState(false);
+  useEffect(()=>{
+    const handleScroll=()=>{
+      setScrolled(window.scrollY >50);
+    }
+     window.addEventListener("scroll", handleScroll);
+      return () => {
+        window.removeEventListener("scroll", handleScroll);
+      };
+  },[])
   return (
-    
     <div>
       <div
         className="h-screen w-screen relative bg-cover bg-center
              before:absolute before:inset-0 before:bg-black/55 before:content-['']"
         style={{ backgroundImage: `url(${heroBg})` }}
       >
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 flex h-14 w-11/12 border-x-0 border-gray-500 rounded-3xl justify-center items-center px-10 mt-5">
+        <div
+          className={`fixed top-0 left-0 z-50 w-full h-20 px-10 flex items-center  transition-colors duration-300 ${
+            scrolled
+              ? "bg-[#061021] border-2 border-gray-600 rounded-lg shadow-xl"
+              : "bg-transparent"
+          }`}
+        >
           <Navbar />
         </div>
         <div className="relative h-2/3 w-full flex justify-start items-center gap-2 inset-y-1/2 -translate-y-1/2 p-0">

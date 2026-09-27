@@ -1,11 +1,24 @@
 import heroBg from "../assets/Hero-bg.png";
 import logoImage from "../assets/hero-logo.png"
 import HeroCard from "./HeroCard";
-export function GetStarted(){
+import { Link } from "react-router-dom";
+export function CTAButtons({ primary, secondary, primaryTo, secondaryTo }) {
   return (
-    <button className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold">
-      Get Started Now →
-    </button>
+    <div className="text-white flex justify-start gap-8 text-lg">
+      <Link
+        to={primaryTo}
+        className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold"
+      >
+        {primary}
+      </Link>
+
+      <Link
+        to={secondaryTo}
+        className="border-white border-2 px-4 py-2 rounded-3xl"
+      >
+        {secondary}
+      </Link>
+    </div>
   );
 };
 export function Navbar(){
@@ -15,31 +28,26 @@ export function Navbar(){
         <img src={logoImage} alt="HEALIX" className="w-auto h-full" />
       </div>
       <div className="h-full w-2/5 flex justify-between items-center text-white text-lg">
-        <a
-        href="">
-          Home
-        </a>
-        <a href="">
-          About
-        </a>
-        <a href="">
-          Features
-        </a>
-        <a href="">
-          How it works
-        </a>
-        <a href="">
-          Contact
-        </a>
+        <a href="">Home</a>
+        <a href="">About</a>
+        <a href="">Features</a>
+        <a href="">How it works</a>
+        <a href="">Contact</a>
       </div>
       <div>
-        <GetStarted />
+        <CTAButtons
+          primary="Register Now"
+          secondary="Login"
+          primaryTo="/register"
+          secondaryTo="/login"
+        />
       </div>
     </div>
   );
 };
 const Hero = () => {
   return (
+    
     <div>
       <div
         className="h-screen w-screen relative bg-cover bg-center
@@ -65,14 +73,14 @@ const Hero = () => {
               nearby healthcare-all in one place. Intelligent insights made
               simple.
             </p>
-            <div className="text-white flex justify-start gap-8 text-lg">
-              <GetStarted />
-              <button className="border-white border-2 px-4 py-2 rounded-3xl">
-                Explore How it works
-              </button>
-            </div>
+            <CTAButtons
+              primary="Get started Now →"
+              secondary="Explore How it works"
+              primaryTo="/get-started"
+              secondaryTo="/how-it-works"
+            />
           </div>
-          <div className="w-1/4 h-5/6 flex flex-col justify-center items-center ml-10 border-2 border-gray-400 rounded-3xl bg-white/5">
+          <div className="w-1/4 h-5/6 flex flex-col justify-center items-center ml-24 mt-10 border-2 border-gray-400 rounded-3xl bg-white/5">
             <HeroCard />
           </div>
         </div>

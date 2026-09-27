@@ -1,5 +1,6 @@
 import heroBg from "../assets/Hero-bg.png";
 import logoImage from "../assets/hero-logo.png"
+import HeroCard from "./HeroCard";
 export function GetStarted(){
   return (
     <button className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold">
@@ -48,8 +49,8 @@ const Hero = () => {
         <div className="fixed top-0 left-1/2 -translate-x-1/2 flex h-14 w-11/12 border-x-0 border-gray-500 rounded-3xl justify-center items-center px-10 mt-5">
           <Navbar />
         </div>
-        <div className="relative h-full w-full flex justify-start items-center gap-2">
-          <div className="w-3/5 h-3/4 flex flex-col justify-center gap-7  px-28">
+        <div className="relative h-2/3 w-full flex justify-start items-center gap-2 inset-y-1/2 -translate-y-1/2 p-0">
+          <div className="w-3/5 h-full flex flex-col justify-center gap-7  px-28">
             {/* //hero-left */}
             <h3 className="text-xs border-2 border-[#00C9A7] rounded-xl w-fit px-3 py-1 text-[#00C9A7]">
               Meet Healix Companion
@@ -71,7 +72,9 @@ const Hero = () => {
               </button>
             </div>
           </div>
-          <div>{/* //hero right */}</div>
+          <div className="w-1/4 h-5/6 flex flex-col justify-center items-center ml-10 border-2 border-gray-400 rounded-3xl bg-white/5">
+            <HeroCard />
+          </div>
         </div>
       </div>
     </div>

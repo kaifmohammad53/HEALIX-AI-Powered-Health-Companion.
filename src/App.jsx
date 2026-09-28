@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Hero from './Homepage/Hero'
-import Hero_TrustBanner from './Homepage/Hero_TrustBanner';
-import Hero_stats from './Homepage/Hero_stats';
+
 
 function App() {
   return (
@@ -19,8 +18,7 @@ function App() {
           <Route path="/how-it-works" element={<div>How It Works Page</div>} />
         </Routes>
       </BrowserRouter>
-      <Hero_TrustBanner />
-      <Hero_stats />
+      
     </>
   );
 }

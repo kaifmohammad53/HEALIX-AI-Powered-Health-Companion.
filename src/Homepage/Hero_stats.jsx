@@ -1,7 +1,6 @@
 import { useState, useEffect , useRef} from "react";
 import statsBg from "../assets/statsBg.png"
 export function Stats(props){
-  console.log(props.startAnimation);
   const [count, setCount] = useState(0);
    useEffect(() => {
      if (props.startAnimation) {

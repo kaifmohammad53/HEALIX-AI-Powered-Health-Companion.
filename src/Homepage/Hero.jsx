@@ -5,6 +5,8 @@ import HeroCard from "./HeroCard";
 import { Link } from "react-router-dom";
 import Hero_TrustBanner from "./Hero_TrustBanner";
 import Hero_stats from "./Hero_stats";
+import Hero_features from "./Hero_features";
+import Hero_how_works from "./Hero_how_works";
 export function CTAButtons({ primary, secondary, primaryTo, secondaryTo }) {
   return (
     <div className="text-white flex justify-start gap-8 text-lg">
@@ -129,7 +131,9 @@ const Hero = () => {
         </div>
       </div>
       <Hero_TrustBanner />
+      <Hero_features />
       <Hero_stats />
+      <Hero_how_works />
     </div>
   );
 };

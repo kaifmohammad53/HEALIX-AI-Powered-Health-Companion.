@@ -8,6 +8,9 @@ import Hero_stats from "./Hero_stats";
 import Hero_features from "./Hero_features";
 import Hero_how_works from "./Hero_how_works";
 import Hero_Journey from "./Hero_Journey";
+import Hero_Explainibility from "./Hero_Explainibility"
+import Hero_finalCTA from "./Hero_finalCTA";
+import Footer from "./Footer";
 export function CTAButtons({ primary, secondary, primaryTo, secondaryTo }) {
   return (
     <div className="text-white flex justify-start gap-8 text-lg">
@@ -135,7 +138,10 @@ const Hero = () => {
       <Hero_features />
       <Hero_stats />
       <Hero_how_works />
-      <Hero_Journey/>
+      <Hero_Journey />
+      <Hero_Explainibility />
+      <Hero_finalCTA />
+      <Footer/>
     </div>
   );
 };

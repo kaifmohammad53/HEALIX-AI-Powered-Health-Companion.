@@ -44,7 +44,7 @@ const Hero_stats = () => {
     <div
       ref={sectionRef}
       className="relative h-48 w-screen bg-cover bg-center before:absolute before:inset-0
-             before:bg-black/40
+             before:bg-black/10
              before:content-['']"
       style={{ backgroundImage: `url(${statsBg})` }}
     >

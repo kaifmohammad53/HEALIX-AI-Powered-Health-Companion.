@@ -1,5 +1,6 @@
 import logo from "../assets/hero-logo.png"
 import { FaLinkedin, FaXTwitter, FaInstagram } from "react-icons/fa6";
+
 const Footer = () => {
   return (
     <>

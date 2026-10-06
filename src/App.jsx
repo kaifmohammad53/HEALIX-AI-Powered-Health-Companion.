@@ -1,24 +1,23 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Hero from './Homepage/Hero'
-
-
+import Register_page from './Registration/Register_page';
+import LoginPage from './Registration/LoginPage';
 function App() {
   return (
     <>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Hero />} />
-          <Route path="/register" element={<div>Register Page</div>} />
+          <Route path="/register" element={<Register_page />} />
 
-          <Route path="/login" element={<div>Login Page</div>} />
-
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgotPasswd" element={<div>tera paswword mujhe kaise pata hoga??? khud dekh nah</div>} />
           <Route path="/get-started" element={<div>Get Started Page</div>} />
 
           <Route path="/how-it-works" element={<div>How It Works Page</div>} />
         </Routes>
       </BrowserRouter>
-      
     </>
   );
 }

@@ -27,8 +27,7 @@ const Hero_Journey = () => {
     const observer = new IntersectionObserver((entries)=>{
       const entry=entries[0];
       if(entry.isIntersecting){
-        console.log("journey is visible");
-        
+        // console.log("journey is visible");
         setStartAnimation(true);
       }
     });

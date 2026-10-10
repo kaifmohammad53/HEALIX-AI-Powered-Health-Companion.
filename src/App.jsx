@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Hero from './Homepage/Hero'
 import Register_page from './Registration/Register_page';
 import LoginPage from './Registration/LoginPage';
+import { Home } from 'lucide-react';
+import Healix_Home from './Home/Healix_Home';
 function App() {
   return (
     <>
@@ -10,9 +12,45 @@ function App() {
         <Routes>
           <Route path="/" element={<Hero />} />
           <Route path="/register" element={<Register_page />} />
-
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgotPasswd" element={<div>tera paswword mujhe kaise pata hoga??? khud dekh nah</div>} />
+          <Route path="/Healix_Home" element={<Healix_Home />} />
+
+          <Route path="/Healix_Home" element={<Healix_Home />} />
+          <Route
+            path="/Dashboard"
+            element={<div>this page is in progress</div>}
+          />
+          <Route
+            path="/HealthAssesment"
+            element={<div>this page is in progress</div>}
+          />
+          <Route
+            path="/MedicalReports"
+            element={<div>this page is in progress</div>}
+          />
+          <Route
+            path="/Guidance"
+            element={<div>this page is in progress</div>}
+          />
+          <Route
+            path="/HealthCare"
+            element={<div>this page is in progress</div>}
+          />
+          <Route
+            path="/CostEstimator"
+            element={<div>this page is in progress</div>}
+          />
+          <Route
+            path="/AskHealix"
+            element={<div>this page is in progress</div>}
+          />
+
+          <Route
+            path="/forgotPasswd"
+            element={
+              <div>tera paswword mujhe kaise pata hoga??? khud dekh nah</div>
+            }
+          />
           <Route path="/get-started" element={<div>Get Started Page</div>} />
 
           <Route path="/how-it-works" element={<div>How It Works Page</div>} />

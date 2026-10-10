@@ -8,7 +8,9 @@ import Alert from "@mui/material/Alert";
 import { FcGoogle } from "react-icons/fc";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
+import { useNavigate } from "react-router-dom";
 const Register_page = () => {
+  const navigate = useNavigate();
     const [formData, setFormData] = useState({
       email: "",
       password: "",
@@ -22,13 +24,12 @@ const Register_page = () => {
     const [passwordMatch, setPasswordMatch] = useState(true);
     const handleSubmit = (e) => {
       e.preventDefault();
-
-
       console.log(formData);
       setFormData({
         email: "",
         password: "",
       });
+      navigate("/Healix_Home");
     };
   return (
     <div className="h-screen w-screen flex">

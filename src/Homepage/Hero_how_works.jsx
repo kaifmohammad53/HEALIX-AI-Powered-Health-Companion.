@@ -1,5 +1,4 @@
 import { useEffect, useState,useRef } from "react";
-
 export function Hero_header_steps(props){
   return (
     <div className="hiw-header w-11/12 h-24 flex flex-col justify-center items-center">

@@ -9,6 +9,8 @@ import Dashboard from "./Dashboard";
 import HealixAssesment from "./Assesment/HealixAssesment";
 import VerifyEmail from "./Registration/VerifyEmail";
 import ForgotPassword from "./Registration/ForgotPassword";
+import AssessmentResults from "./Assesment/AssessmentResults";
+import MedicalReports from "./MedicalReports";
 
 function App() {
  function GetStartedRoute() {
@@ -72,17 +74,19 @@ function App() {
           <Route path="/Healix_Home" element={<Healix_Home />} />
           <Route path="/Dashboard" element={<Dashboard />} />
           <Route path="/HealthAssesment" element={<HealixAssesment />} />
-          <Route
-            path="/MedicalReports"
-            element={<div>this page is in progress</div>}
-          />
+          <Route path="/AssessmentResults" element={<AssessmentResults />} />
+          <Route path="/MedicalReports" element={<MedicalReports />} />
           <Route
             path="/Guidance"
             element={<div>this page is in progress</div>}
           />
           <Route
             path="/HealthCare"
-            element={<div>this page is in progress</div>}
+            element={
+              <div>
+                Doctor sahab abhi hain nhi......aane wale hai,, Baith jaiye!
+              </div>
+            }
           />
           <Route
             path="/CostEstimator"

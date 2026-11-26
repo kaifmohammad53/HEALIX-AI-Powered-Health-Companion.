@@ -1,3 +1,4 @@
+
 # =========================
 # Python
 # =========================
@@ -6,10 +7,11 @@ __pycache__/
 *.pyo
 
 # =========================
-# Virtual environment
+# Virtual Environments
 # =========================
 venv/
 .venv/
+env/
 
 # =========================
 # Jupyter
@@ -17,65 +19,86 @@ venv/
 .ipynb_checkpoints/
 
 # =========================
-# Large datasets
+# AI Models - Large Files
 # =========================
+/MODELS/
+*.joblib
+*.pkl
+*.h5
+*.keras
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.ckpt
+*.pb
+
+# =========================
+# Datasets
+# =========================
+/DATA/
 *.csv
 
 # =========================
-# Environment files
+# Environment Variables
 # =========================
 .env
 .env.*
+!.env.example
 
 # =========================
-# Model cache / temporary files
+# Node / React
 # =========================
-*.tmp
-*.temp
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# =========================
+# Java / Maven
+# =========================
+**/target/
+*.class
 
 # =========================
 # Logs
 # =========================
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
 # =========================
-# Node / React
+# Temporary Files
 # =========================
-node_modules
-dist
-dist-ssr
-*.local
+*.tmp
+*.temp
 
 # =========================
-# Editor directories and files
+# Local ZIP Backups
+# =========================
+/src (5).zip
+
+# =========================
+# IDE
 # =========================
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
+
+# =========================
+# OS Files
+# =========================
 .DS_Store
+Thumbs.db
+desktop.ini
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# =========================
-# OS files
-# =========================
-Thumbs.db
-# Local datasets
-DATA/
-
-# Large trained models
-MODELS/SYMPTOMS/*.joblib
-
-# Python cache files
-__pycache__/
-*.py[cod]
-.ipynb_checkpoints/
+# ZIP backup files
+*.zip

@@ -26,10 +26,11 @@ const Home = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState("");
 
-  // Assessment and reports remain pending until their backend is implemented.
-  const assessmentComplete = false;
-  const medicalReports = false;
+  const [latestAssessment, setLatestAssessment] = useState(null);
+  const [assessmentLoading, setAssessmentLoading] = useState(true);
+  const [assessmentError, setAssessmentError] = useState("");
 
+  // Fetch the logged-in user's profile.
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem("token");
@@ -82,8 +83,122 @@ const Home = () => {
     fetchProfile();
   }, []);
 
+  // Fetch the latest saved assessment for the logged-in user.
+  useEffect(() => {
+    const fetchLatestAssessment = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setAssessmentLoading(false);
+        setAssessmentError("Please sign in to check your assessment.");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          "http://localhost:8081/api/v1/assessments/latest",
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (response.status === 404) {
+          setLatestAssessment(null);
+          setAssessmentError("");
+          localStorage.removeItem("healixLatestAssessment");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Unable to check your latest assessment.");
+        }
+
+        const assessment = await response.json();
+
+        if (assessment && typeof assessment === "object") {
+          setLatestAssessment(assessment);
+
+          localStorage.setItem(
+            "healixLatestAssessment",
+            JSON.stringify(assessment),
+          );
+        } else {
+          setLatestAssessment(null);
+        }
+
+        setAssessmentError("");
+      } catch (error) {
+        console.error("Unable to load latest assessment:", error);
+        setAssessmentError(
+          error.message || "Unable to check your latest assessment.",
+        );
+      } finally {
+        setAssessmentLoading(false);
+      }
+    };
+
+    fetchLatestAssessment();
+  }, []);
+
   const profileSetup = user?.onboardingStatus === "COMPLETED";
   const displayName = user?.fullName?.trim() || "there";
+
+  // A saved assessment means the user has completed at least one assessment.
+  const assessmentComplete = Boolean(latestAssessment);
+
+  const predictions = Array.isArray(latestAssessment?.predictions)
+    ? latestAssessment.predictions
+    : [];
+
+  const symptoms = Array.isArray(latestAssessment?.symptoms)
+    ? latestAssessment.symptoms
+    : [];
+
+  const topPrediction = [...predictions].sort(
+    (a, b) =>
+      Number(b.model_score_percent ?? 0) - Number(a.model_score_percent ?? 0),
+  )[0];
+
+  const assessmentDate = latestAssessment?.completedAt
+    ? new Date(latestAssessment.completedAt)
+    : null;
+
+  const formattedAssessmentDate =
+    assessmentDate && !Number.isNaN(assessmentDate.getTime())
+      ? assessmentDate.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : null;
+
+  const daysAgo =
+    assessmentDate && !Number.isNaN(assessmentDate.getTime())
+      ? Math.max(
+          0,
+          Math.floor(
+            (Date.now() - assessmentDate.getTime()) / (1000 * 60 * 60 * 24),
+          ),
+        )
+      : null;
+
+  const assessmentTimeLabel =
+    daysAgo !== null
+      ? daysAgo === 0
+        ? "Completed today"
+        : daysAgo === 1
+          ? "Completed 1 day ago"
+          : `Completed ${daysAgo} days ago`
+      : formattedAssessmentDate
+        ? `Completed ${formattedAssessmentDate}`
+        : "Assessment completed";
+
+  // Keep this false until medical-report data is connected to the backend.
+  const medicalReports = false;
 
   return (
     <div className="flex flex-col gap-8">
@@ -92,6 +207,7 @@ const Home = () => {
       </div>
 
       <div className="Welcome w-screen">
+        {/* Welcome heading */}
         <div className="flex justify-between px-12 items-center">
           <div>
             <h1 className="font-serif text-5xl">
@@ -132,124 +248,259 @@ const Home = () => {
           </div>
         </div>
 
-        {profileError && (
+        {(profileError || assessmentError) && (
           <div className="px-12 mt-3">
-            <Alert severity="warning">{profileError}</Alert>
+            {profileError && <Alert severity="warning">{profileError}</Alert>}
+
+            {assessmentError && (
+              <Alert severity="warning" className="mt-2">
+                {assessmentError}
+              </Alert>
+            )}
           </div>
         )}
 
+        {/* Main cards: first-time user vs returning user */}
         <div className="cards flex w-screen px-12 mt-6 gap-4">
-          <div className="flex flex-col w-[65%] gap-8 py-5 px-8 rounded-xl border-2 border-[#00C9A7] bg-[#00C9A7]/15">
-            <div>
-              <div className="flex items-center gap-2 text-[#00C9A7]">
-                <i className="fa-solid fa-wand-magic-sparkles"></i>
-                <p className="font-semibold">RECOMMENDED FIRST STEP</p>
+          {assessmentLoading ? (
+            <div className="flex w-full min-h-[260px] items-center justify-center rounded-xl border border-slate-200 bg-white">
+              <p className="text-black/60">
+                Checking your latest health assessment...
+              </p>
+            </div>
+          ) : assessmentComplete ? (
+            <>
+              {/* Returning user: latest assessment */}
+              <div className="flex flex-col w-[65%] gap-5 py-5 px-8 rounded-xl border-2 border-[#00C9A7] bg-[#00C9A7]/15">
+                <div className="flex justify-between items-center gap-4">
+                  <div className="flex items-center gap-2 text-[#008C78]">
+                    <i className="fa-solid fa-wave-square"></i>
+                    <p className="font-semibold text-sm">
+                      LATEST HEALTH ASSESSMENT
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-black/60">{assessmentTimeLabel}</p>
+                </div>
+
+                <div>
+                  <h2 className="font-serif text-3xl text-[#0B1930]">
+                    Your latest Health Assessment
+                  </h2>
+
+                  <div>
+                    {topPrediction ? (
+                      <>
+                        <span className="mt-2 inline-flex rounded-full border border-orange-300 bg-orange-50 px-4 py-1.5 text-base font-medium text-orange-700 capitalize">
+                          {topPrediction?.condition || "Assessment completed"}
+                        </span>
+
+                        {topPrediction.model_score_percent !== undefined &&
+                          topPrediction.model_score_percent !== null && (
+                            <p className="mt-2 text-base text-black/60">
+                              Model score: {topPrediction.model_score_percent}%
+                            </p>
+                          )}
+
+                        {symptoms.length > 0 && (
+                          <p className="mt-2 text-base leading-6 text-black/60">
+                            Based on your reported symptoms:{" "}
+                            <span className="text-black/80">
+                              {symptoms.join(", ")}.
+                            </span>
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="mt-3 text-base leading-6 text-black/60">
+                        Your assessment has been saved. View your results to
+                        review the available details.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3 items-center">
+                  <Link
+                    to="/AssessmentResults"
+                    state={{ assessment: latestAssessment }}
+                    className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold transition-transform duration-300 hover:scale-105"
+                  >
+                    View assessment results →
+                  </Link>
+
+                  <Link
+                    to="/HealthAssesment"
+                    className="border border-[#00C9A7]/50 px-4 py-2 rounded-3xl text-[#008C78] bg-white font-semibold transition-colors hover:bg-[#00C9A7]/10"
+                  >
+                    Start a new assessment
+                  </Link>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <h1 className="font-serif text-4xl">
-                Start your first Health Assessment
-              </h1>
+              {/* Returning user: progress overview */}
+              <div className="flex flex-col gap-3 w-[35%] px-10 border-2 border-black/10 py-4 bg-white rounded-xl shadow-md">
+                <h2 className="font-serif text-3xl">Your health at a glance</h2>
 
-              <p className="text-base text-black/60 tracking-wider py-2">
-                Tell us about your symptoms, medical history and lifestyle to
-                help you understand what to explore next.
-              </p>
-            </div>
+                <div className="flex justify-between items-center gap-3">
+                  <p className="font-serif text-black/80">
+                    <CheckCircleOutlinedIcon
+                      fontSize="small"
+                      className="text-[#00C9A7]"
+                    />
+                    &nbsp; Profile setup
+                  </p>
 
-            <div className="flex gap-4 items-center">
-              <Link
-                to="/HealthAssesment"
-                className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold transition-transform duration-500 hover:scale-105"
-              >
-                Start Health Assesment →
-              </Link>
+                  <p
+                    className={`font-serif text-sm ${
+                      profileSetup ? "text-[#00A98D]" : "text-black/60"
+                    }`}
+                  >
+                    {profileLoading
+                      ? "Checking..."
+                      : profileSetup
+                        ? "Complete"
+                        : "Not complete"}
+                  </p>
+                </div>
 
-              <p className="text-black/60">Not Started Yet</p>
-            </div>
-          </div>
+                <div className="flex justify-between items-center gap-3">
+                  <p className="font-serif text-black/80">
+                    <CheckCircleOutlinedIcon
+                      fontSize="small"
+                      className="text-[#00C9A7]"
+                    />
+                    &nbsp; Health Assessment
+                  </p>
 
-          <div className="flex flex-col gap-3 w-[35%] px-10 border-2 border-black/10 py-4 bg-white rounded-xl shadow-md">
-            <h1 className="font-serif text-3xl">You’re ready to begin</h1>
+                  <p className="font-serif text-sm text-[#00A98D]">Completed</p>
+                </div>
 
-            <div className="flex justify-between">
-              <p className="font-serif">
-                {profileSetup ? (
-                  <CheckCircleOutlinedIcon
-                    fontSize="small"
-                    className="text-[#00C9A7]"
-                  />
-                ) : (
-                  <RadioButtonUncheckedOutlinedIcon fontSize="small" />
-                )}
-                &nbsp; Profile Setup
-              </p>
+                <div className="flex justify-between items-center gap-3">
+                  <p className="font-serif text-black/80">
+                    {medicalReports ? (
+                      <CheckCircleOutlinedIcon
+                        fontSize="small"
+                        className="text-[#00C9A7]"
+                      />
+                    ) : (
+                      <RadioButtonUncheckedOutlinedIcon fontSize="small" />
+                    )}
+                    &nbsp; Medical Reports
+                  </p>
 
-              <p
-                className={`font-serif ${
-                  profileSetup ? "text-[#00C9A7]" : "text-black/60"
-                }`}
-              >
-                {profileLoading
-                  ? "Checking..."
-                  : profileSetup
-                    ? "Complete"
-                    : "Not Complete"}
-              </p>
-            </div>
+                  <p
+                    className={`font-serif text-sm ${
+                      medicalReports ? "text-[#00A98D]" : "text-black/60"
+                    }`}
+                  >
+                    {medicalReports ? "Available" : "No Reports Added"}
+                  </p>
+                </div>
 
-            <div className="flex justify-between">
-              <p className="font-serif text-black/80 items-center">
-                {assessmentComplete ? (
-                  <CheckCircleOutlinedIcon
-                    fontSize="small"
-                    className="text-[#00C9A7]"
-                  />
-                ) : (
-                  <RadioButtonUncheckedOutlinedIcon fontSize="small" />
-                )}
-                &nbsp; Health Assessment
-              </p>
+                <hr />
 
-              <p
-                className={`font-serif ${
-                  assessmentComplete ? "text-[#00C9A7]" : "text-black/60"
-                }`}
-              >
-                {assessmentComplete ? "Complete" : "Not started"}
-              </p>
-            </div>
+                <p className="text-sm leading-6 text-black/60">
+                  For your detailed health overview, reports and recent
+                  activity, visit your Dashboard.
+                </p>
 
-            <div className="flex justify-between">
-              <p className="font-serif text-black/80">
-                {medicalReports ? (
-                  <CheckCircleOutlinedIcon
-                    fontSize="small"
-                    className="text-[#00C9A7]"
-                  />
-                ) : (
-                  <RadioButtonUncheckedOutlinedIcon fontSize="small" />
-                )}
-                &nbsp; Medical Reports
-              </p>
+                <Link to="/Dashboard" className="text-[#008C78] font-semibold">
+                  Open Dashboard →
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* First-time user: original recommended first step */}
+              <div className="flex flex-col w-[65%] gap-8 py-5 px-8 rounded-xl border-2 border-[#00C9A7] bg-[#00C9A7]/15">
+                <div>
+                  <div className="flex items-center gap-2 text-[#00C9A7]">
+                    <i className="fa-solid fa-wand-magic-sparkles"></i>
+                    <p className="font-semibold">RECOMMENDED FIRST STEP</p>
+                  </div>
+                </div>
 
-              <p
-                className={`font-serif ${
-                  medicalReports ? "text-[#00C9A7]" : "text-black/60"
-                }`}
-              >
-                {medicalReports ? "Complete" : "No Reports Added"}
-              </p>
-            </div>
+                <div>
+                  <h2 className="font-serif text-4xl">
+                    Start your first Health Assessment
+                  </h2>
 
-            <hr />
+                  <p className="text-base text-black/60 tracking-wider py-2">
+                    Tell us about your symptoms, medical history and lifestyle
+                    to help you understand what to explore next.
+                  </p>
+                </div>
 
-            <p className="text-black/60">
-              Take it at your own pace. You can explore any of the tools below
-              whenever you’re ready.
-            </p>
-          </div>
+                <div className="flex flex-wrap gap-4 items-center">
+                  <Link
+                    to="/HealthAssesment"
+                    className="border-[#00C9A7] border-2 px-4 py-2 rounded-3xl text-black bg-[#00C9A7] font-semibold transition-transform duration-500 hover:scale-105"
+                  >
+                    Start Health Assessment →
+                  </Link>
+
+                  <p className="text-black/60">Not Started Yet</p>
+                </div>
+              </div>
+
+              {/* First-time user: setup checklist */}
+              <div className="flex flex-col gap-3 w-[35%] px-10 border-2 border-black/10 py-4 bg-white rounded-xl shadow-md">
+                <h2 className="font-serif text-3xl">You’re ready to begin</h2>
+
+                <div className="flex justify-between items-center gap-3">
+                  <p className="font-serif">
+                    {profileSetup ? (
+                      <CheckCircleOutlinedIcon
+                        fontSize="small"
+                        className="text-[#00C9A7]"
+                      />
+                    ) : (
+                      <RadioButtonUncheckedOutlinedIcon fontSize="small" />
+                    )}
+                    &nbsp; Profile Setup
+                  </p>
+
+                  <p
+                    className={`font-serif ${
+                      profileSetup ? "text-[#00C9A7]" : "text-black/60"
+                    }`}
+                  >
+                    {profileLoading
+                      ? "Checking..."
+                      : profileSetup
+                        ? "Complete"
+                        : "Not Complete"}
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center gap-3">
+                  <p className="font-serif text-black/80">
+                    <RadioButtonUncheckedOutlinedIcon fontSize="small" />
+                    &nbsp; Health Assessment
+                  </p>
+
+                  <p className="font-serif text-black/60">Not started</p>
+                </div>
+
+                <div className="flex justify-between items-center gap-3">
+                  <p className="font-serif text-black/80">
+                    <RadioButtonUncheckedOutlinedIcon fontSize="small" />
+                    &nbsp; Medical Reports
+                  </p>
+
+                  <p className="font-serif text-black/60">No Reports Added</p>
+                </div>
+
+                <hr />
+
+                <p className="text-black/60">
+                  Take it at your own pace. You can explore any of the tools
+                  below whenever you’re ready.
+                </p>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="mt-6 px-12">
@@ -260,6 +511,7 @@ const Home = () => {
           </p>
         </div>
 
+        {/* Original home page cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-12 mt-6">
           <Home_Card
             path="/Dashboard"
@@ -310,9 +562,11 @@ const Home = () => {
           />
         </div>
 
+        {/* Original footer */}
         <div className="mt-12 ml-12 mr-12 flex justify-between border-t-2 border-black/40 p-4">
           <div className="w-full flex gap-3">
             <Shield className="text-sm" />
+
             <p className="text-base">
               Healix provides health information, not medical diagnoses. Always
               consult a healthcare professional for medical advice.

@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+numpy
+joblib
+xgboost
+scikit-learn
+pydantic
+python-dotenv
+PyMuPDF
+pytesseract
+Pillow
+groq

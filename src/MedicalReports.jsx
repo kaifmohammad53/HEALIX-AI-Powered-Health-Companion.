@@ -3,6 +3,7 @@ import { CloudUpload, FileText, X } from "lucide-react";
 import Navbar_main from "./Navbar_main.jsx";
 
 const API_BASE = "http://localhost:8081/api/v1/medical-reports";
+const AI_API = "http://127.0.0.1:8000/api/process-report";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
 
@@ -23,6 +24,8 @@ const SORT_OPTIONS = [
 const STATUS_STYLES = {
   Reviewed: "text-[#00B494] bg-[#00C9A7]/10 border-[#00C9A7]",
   Pending: "text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]",
+  "Pending Review": "text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]",
+  "AI Processed": "text-[#00B494] bg-[#00C9A7]/10 border-[#00C9A7]",
   "Action Required": "text-[#EF4444] bg-[#EF4444]/10 border-[#F87171]",
 };
 
@@ -191,7 +194,33 @@ const MedicalReports = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [selectedReport, setSelectedReport] = useState(null);
+  const [analysisResults, setAnalysisResults] = useState([]);
+const [isUploading, setIsUploading] = useState(false);
+const getDisplayStatus = (report) => {
+  // Preserve an existing human review status.
+  if (
+    report.status === "Reviewed" ||
+    report.status === "Action Required"
+  ) {
+    return report.status;
+  }
 
+  // Check whether Python successfully generated an AI summary.
+  const reportName = report.title.trim().toLowerCase();
+
+  const aiProcessed = analysisResults.some((result) => {
+    if (result.summary_status !== "success") return false;
+
+    const processedFileName = (result.fileName || "")
+      .replace(/\.[^.]+$/, "")
+      .trim()
+      .toLowerCase();
+
+    return processedFileName === reportName;
+  });
+
+  return aiProcessed ? "AI Processed" : "Pending Review";
+};
   const fileInputRef = useRef(null);
   const dragDepth = useRef(0);
   const objectUrls = useRef(new Set());
@@ -228,53 +257,111 @@ const MedicalReports = () => {
   }, []);
 
   const handleFiles = async (fileList) => {
-    const files = Array.from(fileList ?? []);
-    if (files.length === 0) return;
+  const files = Array.from(fileList ?? []);
+  if (files.length === 0 || isUploading) return;
 
-    const errors = [];
-    const accepted = [];
+  const errors = [];
+  const accepted = [];
 
-    files.forEach((file) => {
-      if (!ACCEPTED_TYPES.includes(file.type)) {
-        errors.push(`${file.name}: only PDF, JPG or PNG files are supported.`);
-      } else if (file.size > MAX_FILE_SIZE) {
-        errors.push(`${file.name}: file is larger than 10MB.`);
-      } else {
-        accepted.push(file);
-      }
-    });
-
-    setUploadError(errors.join(" "));
-    if (accepted.length === 0) return;
-
-    try {
-      const headers = getAuthHeaders();
-
-      for (const file of accepted) {
-        const body = new FormData();
-        body.append("file", file);
-        body.append("category", guessCategory(file.name));
-        body.append("reportDate", todayISO());
-
-        const response = await fetch(API_BASE, {
-          method: "POST",
-          headers,
-          body,
-        });
-
-        if (!response.ok) {
-          const message = await response.text();
-          throw new Error(message || `${file.name} upload failed (${response.status}).`);
-        }
-      }
-
-      await fetchReports();
-      setUploadError(errors.length ? errors.join(" ") : "");
-    } catch (error) {
-      setUploadError(error.message || "Report upload nahi ho paya.");
+  files.forEach((file) => {
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      errors.push(`${file.name}: only PDF, JPG or PNG files are supported.`);
+    } else if (file.size > MAX_FILE_SIZE) {
+      errors.push(`${file.name}: file is larger than 10MB.`);
+    } else {
+      accepted.push(file);
     }
-  };
+  });
 
+  if (accepted.length === 0) {
+    setUploadError(errors.join(" "));
+    return;
+  }
+
+  setIsUploading(true);
+  const newResults = [];
+  const processingErrors = [];
+
+  try {
+    const headers = getAuthHeaders();
+
+    for (const file of accepted) {
+      // STEP A: Save the report using the Java backend.
+      const body = new FormData();
+      body.append("file", file);
+      body.append("category", guessCategory(file.name));
+      body.append("reportDate", todayISO());
+
+      const saveResponse = await fetch(API_BASE, {
+        method: "POST",
+        headers,
+        body,
+      });
+
+      if (!saveResponse.ok) {
+        const message = await saveResponse.text();
+        throw new Error(
+          message || `${file.name} upload failed (${saveResponse.status}).`
+        );
+      }
+
+      // STEP B: Process PDF reports using the Python AI backend.
+      if (file.type === "application/pdf") {
+        try {
+          const aiBody = new FormData();
+          aiBody.append("file", file);
+
+          const aiResponse = await fetch(AI_API, {
+            method: "POST",
+            body: aiBody,
+          });
+
+          const aiData = await aiResponse.json().catch(() => ({}));
+
+          if (!aiResponse.ok) {
+            const detail = Array.isArray(aiData.detail)
+              ? aiData.detail.map((item) => item.msg || String(item)).join(", ")
+              : aiData.detail;
+
+            processingErrors.push(
+              `${file.name}: ${detail || `AI processing failed (${aiResponse.status}).`}`
+            );
+            continue;
+          }
+
+          newResults.push({
+            id: `${Date.now()}-${file.name}`,
+            fileName: file.name,
+            ...aiData,
+          });
+        } catch (error) {
+          processingErrors.push(
+            `${file.name}: saved successfully, but AI processing failed. ${error.message}`
+          );
+        }
+      } else {
+        newResults.push({
+          id: `${Date.now()}-${file.name}`,
+          fileName: file.name,
+          summary_status: "not_available",
+          message: "Report saved successfully. AI processing is currently available for PDF reports only.",
+        });
+      }
+    }
+
+    // Refresh the report list from Java backend.
+    await fetchReports();
+
+    // Keep AI results in React state.
+    setAnalysisResults((previous) => [...newResults, ...previous]);
+
+    setUploadError([...errors, ...processingErrors].join(" "));
+  } catch (error) {
+    setUploadError(error.message || "Report upload nahi ho paya.");
+  } finally {
+    setIsUploading(false);
+  }
+};
   const handleView = async (report) => {
     try {
       const response = await fetch(`${API_BASE}/${report.id}/view`, {
@@ -364,12 +451,13 @@ const MedicalReports = () => {
           />
 
           <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="mt-5 px-8 py-2.5 rounded-full bg-[#00C9A7] text-lg font-semibold text-[#0B1A2E] hover:brightness-95 transition"
-          >
-            Upload Medical Report
-          </button>
+  type="button"
+  disabled={isUploading}
+  onClick={() => fileInputRef.current?.click()}
+  className="mt-5 px-8 py-2.5 rounded-full bg-[#00C9A7] text-lg font-semibold text-[#0B1A2E] hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {isUploading ? "Uploading and Processing..." : "Upload Medical Report"}
+</button>
 
           {uploadError && (
             <p role="alert" className="mt-4 text-sm text-red-500 text-center">
@@ -377,6 +465,71 @@ const MedicalReports = () => {
             </p>
           )}
         </div>
+        {analysisResults.length > 0 && (
+  <section className="flex flex-col gap-4">
+    <div className="flex items-center justify-between">
+      <h2 className="font-serif text-2xl text-[#0B1A2E]">
+        AI Report Analysis
+      </h2>
+
+      <button
+        type="button"
+        onClick={() => setAnalysisResults([])}
+        className="text-sm text-slate-500 hover:text-red-500"
+      >
+        Clear results
+      </button>
+    </div>
+
+    {analysisResults.map((result) => {
+      const summary =
+        result.final_summary ||
+        result.ai_summary ||
+        result.fallback_summary;
+
+      return (
+        <article
+          key={result.id}
+          className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="font-semibold text-[#0B1A2E]">
+              {result.fileName}
+            </h3>
+
+            <span className="rounded-full bg-[#00C9A7]/10 px-3 py-1 text-sm text-[#008F78]">
+              {result.summary_status === "success"
+                ? "AI Summary"
+                : result.summary_status === "fallback"
+                ? "Fallback Summary"
+                : "Saved"}
+            </span>
+          </div>
+
+          {summary ? (
+            <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+              {String(summary).replace(/\*\*/g, "")}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-slate-500">
+              {result.message}
+            </p>
+          )}
+
+          {result.extraction_metadata && (
+            <p className="mt-4 border-t border-slate-100 pt-3 text-xs text-slate-400">
+              Pages: {result.extraction_metadata.total_pages}
+              {" | "}
+              Extracted characters: {result.extraction_metadata.total_characters}
+              {" | "}
+              Method: {result.extraction_metadata.methods?.join(", ")}
+            </p>
+          )}
+        </article>
+      );
+    })}
+  </section>
+)}
 
         <div className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -416,7 +569,14 @@ const MedicalReports = () => {
           <div className="flex flex-col gap-4">
             {visibleReports.length > 0 ? (
               visibleReports.map((report) => (
-                <ReportRow key={report.id} report={report} onView={handleView} />
+                <ReportRow
+  key={report.id}
+  report={{
+    ...report,
+    status: getDisplayStatus(report),
+  }}
+  onView={handleView}
+/>
               ))
             ) : (
               <p className="text-center text-slate-500 py-10">
